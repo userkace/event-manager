@@ -166,7 +166,7 @@ def print_event_data(con):
             print(f"{i+1}. {event}")
         while True:
             try:
-                choice = int(input())
+                choice = int(input("> "))
                 if 1 <= choice <= len(event_names):
                     selected_event = event_names[choice - 1]
                     print_event_data_by_name(con, selected_event)  # Call function with chosen event
