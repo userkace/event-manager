@@ -131,7 +131,7 @@ def add_data_to_table(con, table_name):
     con.commit()  # Commit changes to the database
 
 
-def delete_data_from_table(con, table_name):
+def delete_data_from_table(con, table_name, opt):
     """Prompts user to select an entry for deletion from the specified table.
 
         Args:
@@ -151,21 +151,29 @@ def delete_data_from_table(con, table_name):
         for row in data:
             print(f"{row[0]} | {' | '.join(str(x) for x in row[1:])}")  # Format output
 
-        while True:
-            try:
-                choice = int(input("\nEnter the ID of the entry to delete, or 0 to cancel: "))
-                if choice == 0:
-                    return  # Exit the function if user cancels
-                elif 1 <= choice <= len(data):
-                    # Delete the entry with the chosen ID
-                    cursor.execute(f"DELETE FROM {table_name} WHERE id = ?", (choice,))
-                    con.commit()
-                    print(f"Entry with ID {choice} deleted successfully.")
-                    return  # Exit the function after successful deletion
-                else:
-                    print("Invalid ID. Please enter a valid ID or 0 to cancel.")
-            except ValueError:
-                print("Invalid input. Please enter a number.")
+        if opt == 1:
+            choice = input("\nEnter the ID of the entry to delete, or 0 to cancel: ")
+            # Delete the entry with the chosen ID
+            cursor.execute(f"DELETE FROM {table_name} WHERE event_name = ?", (choice,))
+            con.commit()
+            print(f"Entry with ID {choice} deleted successfully.")
+            return  # Exit the function after successful deletion
+        else:
+            while True:
+                try:
+                    choice = input("\nEnter the ID of the entry to delete, or 0 to cancel: ")
+                    if choice == 0:
+                        return  # Exit the function if user cancels
+                    elif 1 <= int(choice) <= len(data):
+                        # Delete the entry with the chosen ID
+                        cursor.execute(f"DELETE FROM {table_name} WHERE id = ?", (int(choice),))
+                        con.commit()
+                        print(f"Entry with ID {choice} deleted successfully.")
+                        return  # Exit the function after successful deletion
+                    else:
+                        print("Invalid ID. Please enter a valid ID or 0 to cancel.")
+                except ValueError:
+                    print("!!! Invalid input. Please enter a number.")
     else:
         print(f"No data found in table '{table_name}'.")
 
@@ -311,7 +319,7 @@ def main():
                 table_names = ["event", "guest", "host", "band"]
 
                 if 1 <= table_choice <= len(table_names):
-                    delete_data_from_table(con, table_names[table_choice - 1])
+                    delete_data_from_table(con, table_names[table_choice - 1], table_choice)
                 elif table_choice == 0:
                     print("< returned to menu")
                 else:
