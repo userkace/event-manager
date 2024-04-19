@@ -60,52 +60,75 @@ def display_data_tables(con):
 
 
 def add_data_to_table(con, table_name):
-    """Prompts user for criteria and deletes entries from the specified table,
-           handling foreign key constraints.
+    """Prompts user for data and inserts it into the specified table, handling foreign keys.
 
         Args:
             con: A sqlite3 connection object.
-            table_name: The name of the table to delete entries from.
+            table_name: The name of the table to add data to.
         """
 
     cursor = con.cursor()
 
-    if table_name in ("guest", "host", "band"):
-        # Ensure no orphaned entries are created due to foreign key constraints
-        print("Deleting entries from", table_name, "might leave orphaned entries in the 'event' table.")
-        print("Consider deleting related events first or setting foreign keys to CASCADE on delete if appropriate.")
-        confirm = input("Do you want to proceed with deletion (y/N)? ").lower()
-        if confirm not in ("y", "yes"):
-            print("Deletion cancelled.")
-            return
+    if table_name == "event":
+        event_name = input("Enter event name: ")
+        address = input("Enter event address: ")
+        cursor.execute("INSERT INTO event (event_name, address) VALUES (?, ?)", (event_name, address))
 
-    print("Enter the criteria for deletion:")
+    elif table_name in ("guest", "host", "band"):
+        # Get a list of valid event names
+        cursor.execute("SELECT event_name FROM event")
+        valid_events = [row[0] for row in cursor.fetchall()]
 
-    # Construct the WHERE clause based on user input
-    where_clause = ""
-    while True:
-        column_name = input("Enter the column name to filter by (or leave blank to delete all): ")
-        if column_name:
-            operator = input("Enter comparison operator (=, !=, LIKE, etc.): ")
-            value = input("Enter the value to compare with: ")
-            where_clause += f" {column_name} {operator} ?"
-            break
+        # Prompt for event selection and ensure it's a valid option
+        while True:
+            print("Select the event for this entry:")
+            for i, event in enumerate(valid_events):
+                print(f"{i + 1}. {event}")
+            choice = int(input()) - 1
+            if 0 <= choice < len(valid_events):
+                selected_event = valid_events[choice]
+                break
+            else:
+                print("Invalid choice. Please enter a number between 1 and", len(valid_events))
 
-    # Build the DELETE statement
-    delete_stmt = f"DELETE FROM {table_name}"
-    if where_clause:
-        delete_stmt += f" WHERE {where_clause}"
+        # Prompt for specific data based on the table
+        if table_name == "guest":
+            last_name = input("Enter guest last name: ")
+            first_name = input("Enter guest first name: ")
+            email = input("Enter guest email (optional): ")
+            birthday = input("Enter guest birthday (YYYY-MM-DD format, optional): ")
+            rsvp = input("Enter RSVP (Going or Not Going): ").upper()
+            if rsvp not in ("GOING", "NOT GOING"):
+                rsvp = "NOT GOING"  # Default to Not Going if invalid
+            cursor.execute(
+                """INSERT INTO guest (last_name, first_name, email, birthday, RSVP, event_name) 
+                VALUES (?, ?, ?, ?, ?, ?)""",
+                (last_name, first_name, email, birthday, rsvp, selected_event),
+            )
+        elif table_name == "host":
+            last_name = input("Enter host last name: ")
+            first_name = input("Enter host first name: ")
+            email = input("Enter host email (optional): ")
+            birthday = input("Enter host birthday (YYYY-MM-DD format, optional): ")
+            cursor.execute(
+                """INSERT INTO host (last_name, first_name, email, birthday, event_name) 
+                VALUES (?, ?, ?, ?, ?)""",
+                (last_name, first_name, email, birthday, selected_event),
+            )
+        else:  # table_name == "band"
+            band_name = input("Enter band name: ")
+            email = input("Enter band email (optional): ")
+            birthday = input("Enter any band member birthday (YYYY-MM-DD format, optional): ")
+            cursor.execute(
+                """INSERT INTO band (band_name, email, birthday, event_name) 
+                VALUES (?, ?, ?, ?)""",
+                (band_name, email, birthday, selected_event),
+            )
 
-    cursor.execute(delete_stmt, (value,))  # Assuming a single value for comparison
-
-    # Confirm deletion and commit changes
-    deleted_count = cursor.rowcount
-    if deleted_count > 0:
-        print(f"{deleted_count} entries from '{table_name}' deleted successfully.")
     else:
-        print("No entries found matching the deletion criteria.")
+        print("Invalid table name provided for data entry.")
 
-    con.commit()
+    con.commit()  # Commit changes to the database
 
 
 def delete_data_from_table(con, table_name):
