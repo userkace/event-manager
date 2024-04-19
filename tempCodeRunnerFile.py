@@ -242,7 +242,7 @@ def main():
     con = sqlite3.connect(r".\data.sqlite")
 
     while True:
-        print("\n\nEvent Manager")
+        print("\nEvent Manager")
         print("1. View Events")
         print("2. Data Manipulation")
         print("0. exit...")
