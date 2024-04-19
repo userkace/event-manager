@@ -262,7 +262,7 @@ def main():
             if choice == 1:
                 display_data_tables(con)
             elif choice == 2:
-                print("\nView:")
+                print("\nChoose:")
                 print("1. Events")
                 print("2. Guests")
                 print("3. Hosts")
