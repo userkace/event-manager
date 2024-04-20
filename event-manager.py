@@ -162,12 +162,13 @@ def delete_data_from_table(con, table_name, opt):
             print(f"Entry with event_name: {choice} deleted successfully.")
             return  # Exit the function after successful deletion
         else:
+            keys = get_keys(data)
             while True:
                 try:
                     choice = input("\nEnter the ID of the entry to delete, or 0 to cancel: ")
                     if choice == '0':
                         return  # Exit the function if user cancels
-                    elif 1 <= int(choice) <= len(data):
+                    elif choice in keys:
                         # Delete the entry with the chosen ID
                         cursor.execute(f"DELETE FROM {table_name} WHERE id = ?", (int(choice),))
                         con.commit()
@@ -191,11 +192,41 @@ def update_data_from_table(con, table_index):
     if data:
         print(f"\nData in table '{table_choice}':")
         print_data(headers, data)
+        keys = get_keys(data)
+        prompt = "Enter the ID of the entry you want to update: "
+        makeChoiceInt = True
+        keyString = "id"
         if table_choice == "event":
-            pass
-        else:
-            pass
-        pass
+            prompt = "Enter the 'event_name' of the entry you want to update: "
+            makeChoiceInt = False
+            keyString = "event_name"
+        while True:
+            choice = input(prompt)
+            if choice == '0':
+                break
+            elif choice not in keys:
+                print("!!! Invalid input. Try again.")
+            else:
+                columns = get_headers(cursor)
+                while True:
+                    choice2 = input("Enter the 'column_name' you want to update: ")
+                    if choice2 not in columns or choice2 == columns[0]:
+                        print("!!! Invalid input. Try again.")
+                    else:
+                        choice3 = input("Enter 'new value'")
+                        if makeChoiceInt:
+                            choice = int(choice)
+                        cursor.execute(f"UPDATE {table_choice} SET {choice2} = ? WHERE {keyString} = ?", (choice3, choice))
+                        con.commit()
+                        return
+    pass
+
+
+def get_keys(data):
+    return [row[0] for row in data]
+
+def get_headers(cursor):
+    return [column[0] for column in cursor.description]
 
 def print_data(headers, data, no_id = False):
     if no_id:
