@@ -86,13 +86,18 @@ def add_data_to_table(con, table_name):
             print("Select the event for this entry:")
             for i, event in enumerate(valid_events):
                 print(f"{i + 1}. {event}")
-            choice = int(input()) - 1
+            try:
+                choice = int(input()) - 1
+            except ValueError:
+                print("Invalid choice. Please enter a number between 1 and", len(valid_events))
+                continue
             if 0 <= choice < len(valid_events):
                 selected_event = valid_events[choice]
                 break
             else:
                 print("Invalid choice. Please enter a number between 1 and", len(valid_events))
 
+        new_key = get_new_key(con, table_name)
         # Prompt for specific data based on the table
         if table_name == "guest":
             last_name = input("Enter guest last name: ")
@@ -103,9 +108,9 @@ def add_data_to_table(con, table_name):
             if rsvp not in ("GOING", "NOT GOING"):
                 rsvp = "NOT GOING"  # Default to Not Going if invalid
             cursor.execute(
-                """INSERT INTO guest (last_name, first_name, email, birthday, RSVP, event_name) 
-                VALUES (?, ?, ?, ?, ?, ?)""",
-                (last_name, first_name, email, birthday, rsvp, selected_event),
+                """INSERT INTO guest (id, last_name, first_name, email, birthday, RSVP, event_name) 
+                VALUES (?, ?, ?, ?, ?, ?, ?)""",
+                (new_key, last_name, first_name, email, birthday, rsvp, selected_event,),
             )
         elif table_name == "host":
             last_name = input("Enter host last name: ")
@@ -113,24 +118,30 @@ def add_data_to_table(con, table_name):
             email = input("Enter host email (optional): ")
             birthday = input("Enter host birthday (YYYY-MM-DD format, optional): ")
             cursor.execute(
-                """INSERT INTO host (last_name, first_name, email, birthday, event_name) 
-                VALUES (?, ?, ?, ?, ?)""",
-                (last_name, first_name, email, birthday, selected_event),
+                """INSERT INTO host (id, last_name, first_name, email, birthday, event_name) 
+                VALUES (?, ?, ?, ?, ?, ?)""",
+                (new_key, last_name, first_name, email, birthday, selected_event,),
             )
         else:  # table_name == "band"
             band_name = input("Enter band name: ")
             email = input("Enter band email (optional): ")
             birthday = input("Enter any band member birthday (YYYY-MM-DD format, optional): ")
             cursor.execute(
-                """INSERT INTO band (band_name, email, birthday, event_name) 
-                VALUES (?, ?, ?, ?)""",
-                (band_name, email, birthday, selected_event),
+                """INSERT INTO band (id, band_name, email, birthday, event_name) 
+                VALUES (?, ?, ?, ?, ?)""",
+                (new_key, band_name, email, birthday, selected_event,),
             )
 
     else:
         print("Invalid table name provided for data entry.")
 
     con.commit()  # Commit changes to the database
+
+def get_new_key(con, table_name):
+    cursor = con.cursor()
+    cursor.execute(f"SELECT * FROM {table_name}")
+    keys = [int(key) for key in get_keys(cursor.fetchall())]
+    return str(max(keys) + 1)
 
 
 def delete_data_from_table(con, table_name, opt):
@@ -170,7 +181,8 @@ def delete_data_from_table(con, table_name, opt):
                         return  # Exit the function if user cancels
                     elif choice in keys:
                         # Delete the entry with the chosen ID
-                        cursor.execute(f"DELETE FROM {table_name} WHERE id = ?", (int(choice),))
+                        #cursor.execute(f"DELETE FROM {table_name} WHERE id = ?", (int(choice),))
+                        cursor.execute(f"DELETE FROM {table_name} WHERE id = ?", (choice,))
                         con.commit()
                         print(f"Entry with ID {choice} deleted successfully.")
                         return  # Exit the function after successful deletion
@@ -194,11 +206,9 @@ def update_data_from_table(con, table_index):
         print_data(headers, data)
         keys = get_keys(data)
         prompt = "Enter the ID of the entry you want to update: "
-        makeChoiceInt = True
         keyString = "id"
         if table_choice == "event":
             prompt = "Enter the 'event_name' of the entry you want to update: "
-            makeChoiceInt = False
             keyString = "event_name"
         while True:
             choice = input(prompt)
@@ -214,9 +224,7 @@ def update_data_from_table(con, table_index):
                         print("!!! Invalid input. Try again.")
                     else:
                         choice3 = input("Enter 'new value'")
-                        if makeChoiceInt:
-                            choice = int(choice)
-                        cursor.execute(f"UPDATE {table_choice} SET {choice2} = ? WHERE {keyString} = ?", (choice3, choice))
+                        cursor.execute(f"UPDATE {table_choice} SET {choice2} = ? WHERE {keyString} = ?", (choice3, choice,))
                         con.commit()
                         return
     pass
@@ -249,7 +257,10 @@ def print_data(headers, data, no_id = False):
 
     for row in range(row_numbers):
         for column in range(column_numbers):
-            current_length = len(data[row][column])
+            try:
+                current_length = len(data[row][column])
+            except TypeError:
+                current_length = 0
             if current_length > max_lengths[column]:
                 max_lengths[column] = current_length
     
@@ -260,7 +271,12 @@ def print_data(headers, data, no_id = False):
     print("-" * (sum(max_lengths)+column_numbers))
     for row in range(row_numbers):
         for column in range(column_numbers):
-            print(f"{data[row][column].ljust(max_lengths[column])}" + "|", end="")
+            try:
+                current_data = data[row][column]
+                current_data.ljust(1)
+            except AttributeError:
+                current_data = " "
+            print(f"{current_data.ljust(max_lengths[column])}" + "|", end="")
             if column == (column_numbers-1):
                 print()
 
