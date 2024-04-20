@@ -147,22 +147,23 @@ def delete_data_from_table(con, table_name, opt):
 
     if data:
         print(f"\nData in table '{table_name}':")
-        print("ID  | Other Columns...")  # Display headers with "ID" for clarity
-        for row in data:
-            print(f"{row[0]} | {' | '.join(str(x) for x in row[1:])}")  # Format output
+        # print("ID  | Other Columns...")  # Display headers with "ID" for clarity
+        # for row in data:
+            # print(f"{row[0]} | {' | '.join(str(x) for x in row[1:])}")  # Format output
 
+        print_data(cursor.description, data)
         if opt == 1:
-            choice = input("\nEnter the ID of the entry to delete, or 0 to cancel: ")
+            choice = input("\nEnter the event_name of the entry to delete, or 0 to cancel: ")
             # Delete the entry with the chosen ID
             cursor.execute(f"DELETE FROM {table_name} WHERE event_name = ?", (choice,))
             con.commit()
-            print(f"Entry with ID {choice} deleted successfully.")
+            print(f"Entry with event_name: {choice} deleted successfully.")
             return  # Exit the function after successful deletion
         else:
             while True:
                 try:
                     choice = input("\nEnter the ID of the entry to delete, or 0 to cancel: ")
-                    if choice == 0:
+                    if choice == '0':
                         return  # Exit the function if user cancels
                     elif 1 <= int(choice) <= len(data):
                         # Delete the entry with the chosen ID
@@ -177,6 +178,59 @@ def delete_data_from_table(con, table_name, opt):
     else:
         print(f"No data found in table '{table_name}'.")
 
+def update_data_from_table(con, table_index):
+    cursor = con.cursor()
+    table_name = ["event", "guest", "host", "band"]
+    table_choice = table_name[table_index-1]
+    cursor.execute(f"SELECT * FROM {table_choice}")
+    headers = cursor.description
+    data = cursor.fetchall()
+
+    if data:
+        print(f"\nData in table '{table_choice}':")
+        print_data(headers, data)
+        if table_choice == "event":
+            pass
+        else:
+            pass
+        pass
+
+def print_data(headers, data, no_id = False):
+    if no_id:
+        new_data = []
+        choice = 1
+        for row in data:
+            current_row = [str(choice)]
+            for column in row:
+                current_row.append(column)
+            new_data.append(current_row)
+            choice += 1
+        data = new_data
+
+    headers = [column[0] for column in headers]
+    if no_id:
+        headers.insert(0, 'choice')
+    max_lengths = [len(header) for header in headers]
+
+    row_numbers = len(data)
+    column_numbers = len(headers)
+
+    for row in range(row_numbers):
+        for column in range(column_numbers):
+            current_length = len(data[row][column])
+            if current_length > max_lengths[column]:
+                max_lengths[column] = current_length
+    
+    for column in range(column_numbers):
+        print(f"{headers[column].ljust(max_lengths[column])}" + "|", end="")
+        if column == (column_numbers-1):
+            print()
+    print("-" * (sum(max_lengths)+column_numbers))
+    for row in range(row_numbers):
+        for column in range(column_numbers):
+            print(f"{data[row][column].ljust(max_lengths[column])}" + "|", end="")
+            if column == (column_numbers-1):
+                print()
 
 def print_event_data(con):
     """Prompts user to select an event by name and prints all associated data.
@@ -291,6 +345,7 @@ def main():
             print("1. View Data Tables")
             print("2. Add Data to a Table")
             print("3. Delete Data from a Table")
+            print("4. Update Data from a Table")
             print("\n0. go back...")
             choice = int(input("> "))
 
@@ -328,6 +383,23 @@ def main():
                     print("< returned to menu")
                 else:
                     print("!!! Invalid table selection.")
+
+            elif choice == 4:
+                print("\nChoose:")
+                print("1. Events")
+                print("2. Guests")
+                print("3. Hosts")
+                print("4. Bands")
+                print("\n0. go back...")
+                table_choice = int(input("> "))
+
+                if 1 <= table_choice <= 4:
+                    update_data_from_table(con, table_choice)
+                elif table_choice == 0:
+                    print("< returned to menu")
+                else:
+                    print("!!! Invalid table selection.")
+
             elif choice == 0:
                 print("< returned to menu")
             else:
