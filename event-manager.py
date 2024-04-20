@@ -34,12 +34,13 @@ def display_data_tables(con):
 
             # Fetch column names excluding the first one (assuming ID)
             cursor.execute(f"SELECT * FROM {selected_table}")
-            column_names = [desc[0] for desc in cursor.description[0:]]  # Skip first column
+            #column_names = [desc[0] for desc in cursor.description[0:]]  # Skip first column
 
-            # Fetch and display data with column names
-            print(f"{column_names}\n")
-            for row in cursor.fetchall():
-                print(f"{' | '.join(str(x) for x in row)}")  # Skip first element (ID)
+            ## Fetch and display data with column names
+            #print(f"{column_names}\n")
+            #for row in cursor.fetchall():
+                #print(f"{' | '.join(str(x) for x in row)}")  # Skip first element (ID)
+            print_data(cursor.description, cursor.fetchall())
 
 
         elif choice > 0:
@@ -48,12 +49,13 @@ def display_data_tables(con):
 
             # Fetch column names excluding the first one (assuming ID)
             cursor.execute(f"SELECT * FROM {selected_table}")
-            column_names = [desc[0] for desc in cursor.description]  # Skip first column
+            #column_names = [desc[0] for desc in cursor.description]  # Skip first column
 
-            # Fetch and display data with column names
-            print(f"{column_names[1:]}\n")
-            for row in cursor.fetchall():
-                print(f"{' | '.join(str(x) for x in row[1:])}")  # Skip first element (ID)
+            ## Fetch and display data with column names
+            #print(f"{column_names[1:]}\n")
+            #for row in cursor.fetchall():
+                #print(f"{' | '.join(str(x) for x in row[1:])}")  # Skip first element (ID)
+            print_data(cursor.description, cursor.fetchall(), True)
 
     else:
         print("No data tables found in the database.")
@@ -198,18 +200,17 @@ def update_data_from_table(con, table_index):
 def print_data(headers, data, no_id = False):
     if no_id:
         new_data = []
-        choice = 1
         for row in data:
-            current_row = [str(choice)]
-            for column in row:
+            row1 = row[1:]
+            current_row = []
+            for column in row1:
                 current_row.append(column)
             new_data.append(current_row)
-            choice += 1
         data = new_data
 
     headers = [column[0] for column in headers]
     if no_id:
-        headers.insert(0, 'choice')
+        headers.pop(0)
     max_lengths = [len(header) for header in headers]
 
     row_numbers = len(data)
