@@ -226,16 +226,8 @@ def update_data_from_table(con, table_index):
                     if choice2 not in columns or choice2 == columns[0]:
                         print("!!! Invalid input. Try again.")
                     else:
-<<<<<<< Updated upstream
                         choice3 = input("Enter 'new value'")
                         cursor.execute(f"UPDATE {table_choice} SET {choice2} = ? WHERE {keyString} = ?", (choice3, choice,))
-=======
-                        choice3 = input("Enter 'new value': ")
-                        if makeChoiceInt:
-                            choice = int(choice)
-                        cursor.execute(f"UPDATE {table_choice} SET {choice2} = ? WHERE {keyString} = ?",
-                                       (choice3, choice))
->>>>>>> Stashed changes
                         con.commit()
                         return
     pass
@@ -284,18 +276,8 @@ def print_data(headers, data, no_id=False):
     print("-" * (sum(max_lengths) + column_numbers))
     for row in range(row_numbers):
         for column in range(column_numbers):
-<<<<<<< Updated upstream
-            try:
-                current_data = data[row][column]
-                current_data.ljust(1)
-            except AttributeError:
-                current_data = " "
-            print(f"{current_data.ljust(max_lengths[column])}" + "|", end="")
-            if column == (column_numbers-1):
-=======
             print(f"{data[row][column].ljust(max_lengths[column])}" + "|", end="")
             if column == (column_numbers - 1):
->>>>>>> Stashed changes
                 print()
 
 
