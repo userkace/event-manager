@@ -127,7 +127,7 @@ def add_data_to_table(con, table_name):
             cursor.execute(
                 """INSERT INTO band (id, band_name, email, birthday, event_name) 
                 VALUES (?, ?, ?, ?, ?)""",
-                (new_key, band_name, email, birthday, selected_event,),
+                (new_key, band_name, email, selected_event,),
             )
 
     else:
