@@ -15,7 +15,7 @@ def display_data_tables(con):
     if tables:
         print("\nAvailable Data Tables:")
         for i, table in enumerate(tables):
-            print(f"{i+1}. {table}")
+            print(f"{i + 1}. {table}")
         print("0. exit...")
 
         while True:
@@ -34,14 +34,13 @@ def display_data_tables(con):
 
             # Fetch column names excluding the first one (assuming ID)
             cursor.execute(f"SELECT * FROM {selected_table}")
-            #column_names = [desc[0] for desc in cursor.description[0:]]  # Skip first column
+            # column_names = [desc[0] for desc in cursor.description[0:]]  # Skip first column
 
-            ## Fetch and display data with column names
-            #print(f"{column_names}\n")
-            #for row in cursor.fetchall():
-                #print(f"{' | '.join(str(x) for x in row)}")  # Skip first element (ID)
+            # Fetch and display data with column names
+            # print(f"{column_names}\n")
+            # for row in cursor.fetchall():
+            # print(f"{' | '.join(str(x) for x in row)}")  # Skip first element (ID)
             print_data(cursor.description, cursor.fetchall())
-
 
         elif choice > 0:
             selected_table = tables[choice - 1]
@@ -49,12 +48,12 @@ def display_data_tables(con):
 
             # Fetch column names excluding the first one (assuming ID)
             cursor.execute(f"SELECT * FROM {selected_table}")
-            #column_names = [desc[0] for desc in cursor.description]  # Skip first column
+            # column_names = [desc[0] for desc in cursor.description]  # Skip first column
 
-            ## Fetch and display data with column names
-            #print(f"{column_names[1:]}\n")
-            #for row in cursor.fetchall():
-                #print(f"{' | '.join(str(x) for x in row[1:])}")  # Skip first element (ID)
+            # Fetch and display data with column names
+            # print(f"{column_names[1:]}\n")
+            # for row in cursor.fetchall():
+            # print(f"{' | '.join(str(x) for x in row[1:])")  # Skip first element (ID)
             print_data(cursor.description, cursor.fetchall(), True)
 
     else:
@@ -86,13 +85,18 @@ def add_data_to_table(con, table_name):
             print("Select the event for this entry:")
             for i, event in enumerate(valid_events):
                 print(f"{i + 1}. {event}")
-            choice = int(input()) - 1
+            try:
+                choice = int(input()) - 1
+            except ValueError:
+                print("Invalid choice. Please enter a number between 1 and", len(valid_events))
+                continue
             if 0 <= choice < len(valid_events):
                 selected_event = valid_events[choice]
                 break
             else:
                 print("Invalid choice. Please enter a number between 1 and", len(valid_events))
 
+        new_key = get_new_key(con, table_name)
         # Prompt for specific data based on the table
         if table_name == "guest":
             last_name = input("Enter guest last name: ")
@@ -103,9 +107,9 @@ def add_data_to_table(con, table_name):
             if rsvp not in ("GOING", "NOT GOING"):
                 rsvp = "NOT GOING"  # Default to Not Going if invalid
             cursor.execute(
-                """INSERT INTO guest (last_name, first_name, email, birthday, RSVP, event_name) 
-                VALUES (?, ?, ?, ?, ?, ?)""",
-                (last_name, first_name, email, birthday, rsvp, selected_event),
+                """INSERT INTO guest (id, last_name, first_name, email, birthday, RSVP, event_name) 
+                VALUES (?, ?, ?, ?, ?, ?, ?)""",
+                (new_key, last_name, first_name, email, birthday, rsvp, selected_event,),
             )
         elif table_name == "host":
             last_name = input("Enter host last name: ")
@@ -113,23 +117,29 @@ def add_data_to_table(con, table_name):
             email = input("Enter host email (optional): ")
             birthday = input("Enter host birthday (YYYY-MM-DD format, optional): ")
             cursor.execute(
-                """INSERT INTO host (last_name, first_name, email, birthday, event_name) 
-                VALUES (?, ?, ?, ?, ?)""",
-                (last_name, first_name, email, birthday, selected_event),
+                """INSERT INTO host (id, last_name, first_name, email, birthday, event_name) 
+                VALUES (?, ?, ?, ?, ?, ?)""",
+                (new_key, last_name, first_name, email, birthday, selected_event,),
             )
         else:  # table_name == "band"
             band_name = input("Enter band name: ")
             email = input("Enter band email (optional): ")
             cursor.execute(
-                """INSERT INTO band (band_name, email, event_name) 
-                VALUES (?, ?, ?)""",
-                (band_name, email, selected_event),
+                """INSERT INTO band (id, band_name, email, birthday, event_name) 
+                VALUES (?, ?, ?, ?, ?)""",
+                (new_key, band_name, email, selected_event,),
             )
 
     else:
         print("Invalid table name provided for data entry.")
 
     con.commit()  # Commit changes to the database
+
+def get_new_key(con, table_name):
+    cursor = con.cursor()
+    cursor.execute(f"SELECT * FROM {table_name}")
+    keys = [int(key) for key in get_keys(cursor.fetchall())]
+    return str(max(keys) + 1)
 
 
 def delete_data_from_table(con, table_name, opt):
@@ -138,6 +148,9 @@ def delete_data_from_table(con, table_name, opt):
         Args:
             con: A sqlite3 connection object.
             table_name: The name of the table to delete from.
+            :param table_name:
+            :param con:
+            :param opt:
         """
 
     cursor = con.cursor()
@@ -147,10 +160,10 @@ def delete_data_from_table(con, table_name, opt):
     data = cursor.fetchall()
 
     if data:
-        print(f"\nData in table '{table_name}':")
+        print(f"\nData in table '{table_name}': ")
         # print("ID  | Other Columns...")  # Display headers with "ID" for clarity
         # for row in data:
-            # print(f"{row[0]} | {' | '.join(str(x) for x in row[1:])}")  # Format output
+        # print(f"{row[0]} | {' | '.join(str(x) for x in row[1:])}")  # Format output
 
         print_data(cursor.description, data)
         if opt == 1:
@@ -169,7 +182,8 @@ def delete_data_from_table(con, table_name, opt):
                         return  # Exit the function if user cancels
                     elif choice in keys:
                         # Delete the entry with the chosen ID
-                        cursor.execute(f"DELETE FROM {table_name} WHERE id = ?", (int(choice),))
+                        #cursor.execute(f"DELETE FROM {table_name} WHERE id = ?", (int(choice),))
+                        cursor.execute(f"DELETE FROM {table_name} WHERE id = ?", (choice,))
                         con.commit()
                         print(f"Entry with ID {choice} deleted successfully.")
                         return  # Exit the function after successful deletion
@@ -180,24 +194,23 @@ def delete_data_from_table(con, table_name, opt):
     else:
         print(f"No data found in table '{table_name}'.")
 
+
 def update_data_from_table(con, table_index):
     cursor = con.cursor()
     table_name = ["event", "guest", "host", "band"]
-    table_choice = table_name[table_index-1]
+    table_choice = table_name[table_index - 1]
     cursor.execute(f"SELECT * FROM {table_choice}")
     headers = cursor.description
     data = cursor.fetchall()
 
     if data:
-        print(f"\nData in table '{table_choice}':")
+        print(f"\nData in table '{table_choice}': ")
         print_data(headers, data)
         keys = get_keys(data)
         prompt = "Enter the ID of the entry you want to update: "
-        makeChoiceInt = True
         keyString = "id"
         if table_choice == "event":
             prompt = "Enter the 'event_name' of the entry you want to update: "
-            makeChoiceInt = False
             keyString = "event_name"
         while True:
             choice = input(prompt)
@@ -213,9 +226,7 @@ def update_data_from_table(con, table_index):
                         print("!!! Invalid input. Try again.")
                     else:
                         choice3 = input("Enter 'new value'")
-                        if makeChoiceInt:
-                            choice = int(choice)
-                        cursor.execute(f"UPDATE {table_choice} SET {choice2} = ? WHERE {keyString} = ?", (choice3, choice))
+                        cursor.execute(f"UPDATE {table_choice} SET {choice2} = ? WHERE {keyString} = ?", (choice3, choice,))
                         con.commit()
                         return
     pass
@@ -224,10 +235,12 @@ def update_data_from_table(con, table_index):
 def get_keys(data):
     return [row[0] for row in data]
 
+
 def get_headers(cursor):
     return [column[0] for column in cursor.description]
 
-def print_data(headers, data, no_id = False):
+
+def print_data(headers, data, no_id=False):
     if no_id:
         new_data = []
         for row in data:
@@ -248,20 +261,24 @@ def print_data(headers, data, no_id = False):
 
     for row in range(row_numbers):
         for column in range(column_numbers):
-            current_length = len(data[row][column])
+            try:
+                current_length = len(data[row][column])
+            except TypeError:
+                current_length = 0
             if current_length > max_lengths[column]:
                 max_lengths[column] = current_length
-    
+
     for column in range(column_numbers):
         print(f"{headers[column].ljust(max_lengths[column])}" + "|", end="")
-        if column == (column_numbers-1):
+        if column == (column_numbers - 1):
             print()
-    print("-" * (sum(max_lengths)+column_numbers))
+    print("-" * (sum(max_lengths) + column_numbers))
     for row in range(row_numbers):
         for column in range(column_numbers):
             print(f"{data[row][column].ljust(max_lengths[column])}" + "|", end="")
-            if column == (column_numbers-1):
+            if column == (column_numbers - 1):
                 print()
+
 
 def print_event_data(con):
     """Prompts user to select an event by name and prints all associated data.
@@ -279,7 +296,7 @@ def print_event_data(con):
     if event_names:
         print("\nSelect an event to view details:")
         for i, event in enumerate(event_names):
-            print(f"{i+1}. {event}")
+            print(f"{i + 1}. {event}")
         print("\n0. go back...")
         while True:
             try:
@@ -438,5 +455,4 @@ def main():
 
 
 if __name__ == "__main__":
-
     main()
