@@ -124,7 +124,6 @@ def add_data_to_table(con, table_name):
         else:  # table_name == "band"
             band_name = input("Enter band name: ")
             email = input("Enter band email (optional): ")
-            birthday = input("Enter any band member birthday (YYYY-MM-DD format, optional): ")
             cursor.execute(
                 """INSERT INTO band (id, band_name, email, birthday, event_name) 
                 VALUES (?, ?, ?, ?, ?)""",
