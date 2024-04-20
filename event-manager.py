@@ -280,6 +280,7 @@ def main():
         choice = int(input("> "))
         if choice == 0:
             print("< closing application...")
+            break
         if choice == 1:
             print_event_data(con)
         elif choice == 2:
@@ -326,6 +327,7 @@ def main():
                     print("!!! Invalid table selection.")
             elif choice == 0:
                 print("< exiting...")
+                break
             else:
                 print("!!! Invalid choice. Please enter a number between 1 and 4.")
 
