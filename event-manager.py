@@ -195,6 +195,7 @@ def print_event_data(con):
         print("\nSelect an event to view details:")
         for i, event in enumerate(event_names):
             print(f"{i+1}. {event}")
+        print("\n0. go back...")
         while True:
             try:
                 choice = int(input("> "))
@@ -202,6 +203,8 @@ def print_event_data(con):
                     selected_event = event_names[choice - 1]
                     print_event_data_by_name(con, selected_event)  # Call function with chosen event
                     return  # Exit after successful selection
+                elif choice == 0:
+                    return
                 else:
                     print("Invalid choice. Please enter a number between 1 and", len(event_names))
             except ValueError:
@@ -276,7 +279,7 @@ def main():
         print("\n\nEvent Manager")
         print("1. View Events")
         print("2. Data Manipulation")
-        print("0. exit...")
+        print("\n0. exit...")
         choice = int(input("> "))
         if choice == 0:
             print("< closing application...")
@@ -288,7 +291,7 @@ def main():
             print("1. View Data Tables")
             print("2. Add Data to a Table")
             print("3. Delete Data from a Table")
-            print("0. exit...")
+            print("\n0. go back...")
             choice = int(input("> "))
 
             if choice == 1:
@@ -299,7 +302,7 @@ def main():
                 print("2. Guests")
                 print("3. Hosts")
                 print("4. Bands")
-                print("0. exit...")
+                print("\n0. go back...")
                 table_choice = int(input("> "))
                 table_names = ["event", "guest", "host", "band"]
 
@@ -315,7 +318,7 @@ def main():
                 print("2. Guests")
                 print("3. Hosts")
                 print("4. Bands")
-                print("0. exit...")
+                print("\n0. go back...")
                 table_choice = int(input("> "))
                 table_names = ["event", "guest", "host", "band"]
 
@@ -326,8 +329,7 @@ def main():
                 else:
                     print("!!! Invalid table selection.")
             elif choice == 0:
-                print("< exiting...")
-                break
+                print("< returned to menu")
             else:
                 print("!!! Invalid choice. Please enter a number between 1 and 4.")
 
